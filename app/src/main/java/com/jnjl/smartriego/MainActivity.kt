@@ -1,5 +1,6 @@
 package com.jnjl.smartriego
 
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
@@ -23,6 +24,7 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,7 +32,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var pbHumedad: ProgressBar
     private lateinit var tvBomba: TextView
     private lateinit var btnRegar: Button
+    private lateinit var btnSalir: Button
     private lateinit var chartHumedad: LineChart
+
+    // Id del equipo que se está mostrando. -1 = todavía no se eligió ninguno
+    private var dispositivoId = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,13 +52,16 @@ class MainActivity : AppCompatActivity() {
         pbHumedad = findViewById(R.id.pbHumedad)
         tvBomba = findViewById(R.id.tvBomba)
         btnRegar = findViewById(R.id.btnRegar)
+        btnSalir = findViewById(R.id.btnSalir)
         chartHumedad = findViewById(R.id.chartHumedad)
+
+        // Si más adelante la lista de equipos manda un id, se usa ese
+        dispositivoId = intent.getIntExtra("dispositivo_id", -1)
 
         configurarGrafico()
 
-        btnRegar.setOnClickListener {
-            regarAhora()
-        }
+        btnRegar.setOnClickListener { regarAhora() }
+        btnSalir.setOnClickListener { cerrarSesion() }
 
         // Android 17 exige permiso para acceder a la red local
         val permisoRed = "android.permission.ACCESS_LOCAL_NETWORK"
@@ -84,34 +93,74 @@ class MainActivity : AppCompatActivity() {
 
     private suspend fun actualizarTodo() {
         try {
-            val lectura = RetrofitClient.api.obtenerUltimaLectura()
+            // Si no hay equipo elegido, toma el primero de la cuenta
+            if (dispositivoId == -1) {
+                val equipos = RetrofitClient.api.obtenerDispositivos()
+                if (equipos.isEmpty()) {
+                    tvBomba.text = "No tenés equipos. Comprá uno en la web."
+                    return
+                }
+                dispositivoId = equipos.first().id
+            }
+
+            val lectura = RetrofitClient.api.obtenerUltimaLectura(dispositivoId)
             mostrarLectura(lectura)
-            val registros = RetrofitClient.api.obtenerHistorial()
+            val registros = RetrofitClient.api.obtenerHistorial(dispositivoId)
             mostrarGrafico(registros)
+        } catch (e: HttpException) {
+            when (e.code()) {
+                401 -> cerrarSesion()
+                404 -> tvBomba.text = "El equipo todavía no envió datos"
+                else -> tvBomba.text = "Error del servidor (${e.code()})"
+            }
         } catch (e: Exception) {
-            tvBomba.text = "Error: ${e.message}"
+            tvBomba.text = "No se pudo conectar con el servidor"
         }
     }
 
     private fun regarAhora() {
+        if (dispositivoId == -1) {
+            Toast.makeText(this, "Todavía no se cargó el equipo", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         btnRegar.isEnabled = false
         lifecycleScope.launch {
             try {
-                val lectura = RetrofitClient.api.regarManual()
+                val lectura = RetrofitClient.api.regarManual(dispositivoId)
                 mostrarLectura(lectura)
-                mostrarGrafico(RetrofitClient.api.obtenerHistorial())
-                Toast.makeText(this@MainActivity, "Riego enviado", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "Riego enviado al equipo", Toast.LENGTH_SHORT).show()
+            } catch (e: HttpException) {
+                val mensaje = when (e.code()) {
+                    401 -> "Tu sesión venció"
+                    409 -> "El equipo no está conectado todavía"
+                    else -> "No se pudo enviar el riego"
+                }
+                Toast.makeText(this@MainActivity, mensaje, Toast.LENGTH_SHORT).show()
+                if (e.code() == 401) cerrarSesion()
             } catch (e: Exception) {
-                Toast.makeText(this@MainActivity, "No se pudo enviar el riego", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "No se pudo conectar", Toast.LENGTH_SHORT).show()
             }
             btnRegar.isEnabled = true
         }
     }
 
+    private fun cerrarSesion() {
+        RetrofitClient.sesion.cerrarSesion()
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
+    }
+
     private fun mostrarLectura(lectura: Lectura) {
         tvHumedad.text = "${lectura.humedad} %"
         pbHumedad.progress = lectura.humedad
-        tvBomba.text = if (lectura.bomba_encendida) "Bomba: ENCENDIDA" else "Bomba: APAGADA"
+
+        var texto = if (lectura.bomba_encendida) "Bomba: ENCENDIDA" else "Bomba: APAGADA"
+        if (lectura.riego_pendiente) texto += "\nRiego en camino al equipo..."
+        if (lectura.deposito_bajo) texto += "\n⚠ Depósito de agua bajo"
+        tvBomba.text = texto
     }
 
     private fun mostrarGrafico(registros: List<Registro>) {

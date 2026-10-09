@@ -13,15 +13,21 @@
         android:id="@+id/tvTitulo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="16dp"
         android:text="SmartRiego JNJL"
         android:textSize="26sp"
         android:textStyle="bold" />
 
+    <Button
+        android:id="@+id/btnSalir"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cerrar sesión" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="24dp"
         android:text="Humedad del suelo"
         android:textSize="16sp" />
 
@@ -46,7 +52,8 @@
         android:id="@+id/tvBomba"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="24dp"
+        android:gravity="center"
         android:text="Bomba: --"
         android:textSize="20sp" />
 
@@ -54,7 +61,7 @@
         android:id="@+id/btnRegar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="24dp"
         android:text="Regar ahora" />
 
     <com.github.mikephil.charting.charts.LineChart
