@@ -13,6 +13,12 @@ class SessionManager(context: Context) {
 
     fun obtenerToken(): String? = prefs.getString("token", null)
 
+    fun guardarEquipo(id: Int) {
+        prefs.edit().putInt("equipo_id", id).apply()
+    }
+
+    fun obtenerEquipo(): Int = prefs.getInt("equipo_id", -1)
+
     fun cerrarSesion() {
         prefs.edit().clear().apply()
     }

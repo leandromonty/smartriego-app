@@ -9,6 +9,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -28,15 +29,18 @@ import retrofit2.HttpException
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var tvEquipo: TextView
     private lateinit var tvHumedad: TextView
     private lateinit var pbHumedad: ProgressBar
     private lateinit var tvBomba: TextView
     private lateinit var btnRegar: Button
     private lateinit var btnSalir: Button
+    private lateinit var btnEquipo: Button
     private lateinit var chartHumedad: LineChart
 
-    // Id del equipo que se está mostrando. -1 = todavía no se eligió ninguno
+    // Equipo que se está mostrando. -1 = todavía no se eligió ninguno
     private var dispositivoId = -1
+    private var etiquetaEquipo = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,20 +52,23 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        tvEquipo = findViewById(R.id.tvEquipo)
         tvHumedad = findViewById(R.id.tvHumedad)
         pbHumedad = findViewById(R.id.pbHumedad)
         tvBomba = findViewById(R.id.tvBomba)
         btnRegar = findViewById(R.id.btnRegar)
         btnSalir = findViewById(R.id.btnSalir)
+        btnEquipo = findViewById(R.id.btnEquipo)
         chartHumedad = findViewById(R.id.chartHumedad)
 
-        // Si más adelante la lista de equipos manda un id, se usa ese
-        dispositivoId = intent.getIntExtra("dispositivo_id", -1)
+        // Recupera el último equipo elegido (si lo hay)
+        dispositivoId = RetrofitClient.sesion.obtenerEquipo()
 
         configurarGrafico()
 
         btnRegar.setOnClickListener { regarAhora() }
         btnSalir.setOnClickListener { cerrarSesion() }
+        btnEquipo.setOnClickListener { elegirEquipo() }
 
         // Android 17 exige permiso para acceder a la red local
         val permisoRed = "android.permission.ACCESS_LOCAL_NETWORK"
@@ -91,21 +98,41 @@ class MainActivity : AppCompatActivity() {
         chartHumedad.setNoDataText("Esperando datos...")
     }
 
+    // Guarda cuál es el equipo activo y lo muestra arriba
+    private fun seleccionarEquipo(equipo: DispositivoApp) {
+        dispositivoId = equipo.id
+        etiquetaEquipo = "${equipo.nombre} · ${equipo.codigo_activacion}"
+        tvEquipo.text = "Equipo: $etiquetaEquipo"
+        RetrofitClient.sesion.guardarEquipo(equipo.id)
+    }
+
+    // Si todavía no hay equipo elegido (o falta su nombre), lo busca en el servidor
+    private suspend fun asegurarEquipo(): Boolean {
+        if (dispositivoId != -1 && etiquetaEquipo.isNotEmpty()) return true
+
+        val equipos = RetrofitClient.api.obtenerDispositivos()
+        if (equipos.isEmpty()) {
+            tvEquipo.text = "Equipo: --"
+            tvBomba.text = "No tenés equipos. Comprá uno en la web."
+            return false
+        }
+        val elegido = equipos.firstOrNull { it.id == dispositivoId } ?: equipos.first()
+        seleccionarEquipo(elegido)
+        return true
+    }
+
     private suspend fun actualizarTodo() {
         try {
-            // Si no hay equipo elegido, toma el primero de la cuenta
-            if (dispositivoId == -1) {
-                val equipos = RetrofitClient.api.obtenerDispositivos()
-                if (equipos.isEmpty()) {
-                    tvBomba.text = "No tenés equipos. Comprá uno en la web."
-                    return
-                }
-                dispositivoId = equipos.first().id
-            }
+            if (!asegurarEquipo()) return
 
-            val lectura = RetrofitClient.api.obtenerUltimaLectura(dispositivoId)
+            val idActual = dispositivoId
+            val lectura = RetrofitClient.api.obtenerUltimaLectura(idActual)
+            val registros = RetrofitClient.api.obtenerHistorial(idActual)
+
+            // Si cambió de equipo mientras esperaba la respuesta, se descarta
+            if (idActual != dispositivoId) return
+
             mostrarLectura(lectura)
-            val registros = RetrofitClient.api.obtenerHistorial(dispositivoId)
             mostrarGrafico(registros)
         } catch (e: HttpException) {
             when (e.code()) {
@@ -116,6 +143,44 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             tvBomba.text = "No se pudo conectar con el servidor"
         }
+    }
+
+    private fun elegirEquipo() {
+        lifecycleScope.launch {
+            try {
+                val equipos = RetrofitClient.api.obtenerDispositivos()
+                if (equipos.isEmpty()) {
+                    Toast.makeText(this@MainActivity, "No tenés equipos", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                val nombres = equipos
+                    .map { "${it.nombre} · ${it.codigo_activacion}" }
+                    .toTypedArray()
+
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle("Elegí un equipo")
+                    .setItems(nombres) { _, posicion ->
+                        seleccionarEquipo(equipos[posicion])
+                        limpiarPantalla()
+                        lifecycleScope.launch { actualizarTodo() }
+                    }
+                    .setNegativeButton("Cancelar", null)
+                    .show()
+            } catch (e: HttpException) {
+                if (e.code() == 401) cerrarSesion()
+                else Toast.makeText(this@MainActivity, "No se pudo cargar la lista", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, "No se pudo conectar", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun limpiarPantalla() {
+        tvHumedad.text = "-- %"
+        pbHumedad.progress = 0
+        tvBomba.text = "Cargando..."
+        chartHumedad.clear()
     }
 
     private fun regarAhora() {
