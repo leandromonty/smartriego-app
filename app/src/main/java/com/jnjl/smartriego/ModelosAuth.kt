@@ -17,3 +17,9 @@ data class LoginResponse(
     val token_type: String,
     val usuario: UsuarioApp
 )
+
+data class DispositivoApp(
+    val id: Int,
+    val nombre: String,
+    val codigo_activacion: String
+)

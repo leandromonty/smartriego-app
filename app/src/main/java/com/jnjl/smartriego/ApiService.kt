@@ -3,20 +3,22 @@ package com.jnjl.smartriego
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface ApiService {
 
-    // NUEVO: login contra el backend real
     @POST("auth/login")
     suspend fun login(@Body datos: LoginRequest): LoginResponse
 
-    // VIEJO (backend de prueba): se reemplaza en el paso 3
-    @GET("lectura/ultima")
-    suspend fun obtenerUltimaLectura(): Lectura
+    @GET("dispositivos")
+    suspend fun obtenerDispositivos(): List<DispositivoApp>
 
-    @GET("lectura/historial")
-    suspend fun obtenerHistorial(): List<Registro>
+    @GET("dispositivos/{id}/lectura/ultima")
+    suspend fun obtenerUltimaLectura(@Path("id") id: Int): Lectura
 
-    @POST("riego/manual")
-    suspend fun regarManual(): Lectura
+    @GET("dispositivos/{id}/lectura/historial")
+    suspend fun obtenerHistorial(@Path("id") id: Int): List<Registro>
+
+    @POST("dispositivos/{id}/riego/manual")
+    suspend fun regarManual(@Path("id") id: Int): Lectura
 }
