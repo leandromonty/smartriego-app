@@ -1,19 +1,25 @@
 package com.jnjl.smartriego
 
+import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    // 10.0.2.2 es la forma en que el emulador "ve" tu PC
-    private const val BASE_URL = "http://10.0.2.2:8000/"
+    // Backend publicado en Render (HTTPS). Debe terminar en "/".
+    // Para probar con el emulador contra tu PC: "http://10.0.2.2:8000/"
+    private const val BASE_URL = "https://smartriego-backend.onrender.com/"
 
     // Lo inicializa SmartRiegoApp al abrir la app
     lateinit var sesion: SessionManager
 
-    // Agrega "Authorization: Bearer <token>" a cada pedido, si hay sesión
+    // Agrega "Authorization: Bearer <token>" a cada pedido, si hay sesión.
+    // Timeouts largos: el plan gratuito de Render tarda ~1 min en despertar.
     private val cliente = OkHttpClient.Builder()
+        .connectTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS)
         .addInterceptor { cadena ->
             val token = sesion.obtenerToken()
             val pedido = cadena.request().newBuilder().apply {
