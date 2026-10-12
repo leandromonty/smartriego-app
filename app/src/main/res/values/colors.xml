@@ -2,4 +2,13 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Paleta del logo SmartRiego JNJL -->
+    <color name="sr_verde_oscuro">#FF1B5E3A</color>   <!-- texto del logo / color principal -->
+    <color name="sr_verde_hoja">#FF7AA83A</color>     <!-- hojas del logo -->
+    <color name="sr_azul_agua">#FF1783B5</color>      <!-- agua del logo, versión más oscura para que el texto blanco se lea -->
+    <color name="sr_verde_claro">#FFE3F1E6</color>    <!-- fondos suaves (tarjetas, barras) -->
+    <color name="sr_azul_claro">#FFD9EEF8</color>     <!-- fondo suave azul -->
+    <color name="sr_gris_borde">#FFC9D3CC</color>     <!-- bordes y pista de la barra de progreso -->
+    <color name="sr_texto">#FF1F2A24</color>          <!-- texto principal -->
 </resources>

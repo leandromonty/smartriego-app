@@ -2,7 +2,6 @@ package com.jnjl.smartriego
 
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ProgressBar
@@ -230,15 +229,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun mostrarGrafico(registros: List<Registro>) {
         val puntos = registros.mapIndexed { i, r -> Entry(i.toFloat(), r.humedad.toFloat()) }
+        val azulAgua = ContextCompat.getColor(this, R.color.sr_azul_agua)
 
         val dataSet = LineDataSet(puntos, "Humedad (%)").apply {
-            color = Color.parseColor("#6750A4")
+            color = azulAgua
             lineWidth = 2.5f
             setDrawCircles(false)
             setDrawValues(false)
             mode = LineDataSet.Mode.CUBIC_BEZIER
             setDrawFilled(true)
-            fillColor = Color.parseColor("#6750A4")
+            fillColor = azulAgua
             fillAlpha = 40
         }
 
