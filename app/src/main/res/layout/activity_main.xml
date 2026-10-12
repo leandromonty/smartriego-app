@@ -14,21 +14,21 @@
         android:gravity="center_horizontal"
         android:padding="24dp">
 
-        <TextView
-            android:id="@+id/tvTitulo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="SmartRiego JNJL"
-            android:textSize="26sp"
-            android:textStyle="bold" />
+        <ImageView
+            android:id="@+id/imgLogo"
+            android:layout_width="220dp"
+            android:layout_height="190dp"
+            android:contentDescription="Logo SmartRiego JNJL"
+            android:scaleType="fitCenter"
+            android:src="@drawable/logo_smartriego" />
 
         <TextView
             android:id="@+id/tvEquipo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
             android:text="Equipo: --"
+            android:textColor="@color/sr_texto"
             android:textSize="14sp" />
 
         <LinearLayout
@@ -39,12 +39,14 @@
 
             <Button
                 android:id="@+id/btnEquipo"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Cambiar equipo" />
 
             <Button
                 android:id="@+id/btnSalir"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -56,6 +58,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="Humedad del suelo"
+            android:textColor="@color/sr_texto"
             android:textSize="16sp" />
 
         <TextView
@@ -63,6 +66,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="-- %"
+            android:textColor="@color/sr_verde_oscuro"
             android:textSize="56sp"
             android:textStyle="bold" />
 
@@ -73,7 +77,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:max="100"
-            android:progress="0" />
+            android:progress="0"
+            android:progressTint="@color/sr_azul_agua"
+            android:progressBackgroundTint="@color/sr_gris_borde" />
 
         <TextView
             android:id="@+id/tvBomba"
@@ -82,6 +88,7 @@
             android:layout_marginTop="24dp"
             android:gravity="center"
             android:text="Bomba: --"
+            android:textColor="@color/sr_texto"
             android:textSize="20sp" />
 
         <Button

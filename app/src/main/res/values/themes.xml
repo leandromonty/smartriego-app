@@ -1,8 +1,27 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.SmartRiego" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <!-- Tema de SmartRiego: siempre claro, con los colores del logo -->
+    <style name="Base.Theme.SmartRiego" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/sr_verde_oscuro</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/sr_verde_claro</item>
+        <item name="colorOnPrimaryContainer">@color/sr_verde_oscuro</item>
+
+        <item name="colorSecondary">@color/sr_azul_agua</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSecondaryContainer">@color/sr_azul_claro</item>
+        <item name="colorOnSecondaryContainer">@color/sr_verde_oscuro</item>
+
+        <item name="colorTertiary">@color/sr_verde_hoja</item>
+        <item name="colorOnTertiary">@color/white</item>
+
+        <item name="android:colorBackground">@color/white</item>
+        <item name="colorSurface">@color/white</item>
+        <item name="colorOnSurface">@color/sr_texto</item>
+        <item name="colorSurfaceVariant">@color/sr_verde_claro</item>
+        <item name="colorOutline">@color/sr_gris_borde</item>
+
+        <item name="android:statusBarColor">@color/sr_verde_oscuro</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
     <style name="Theme.SmartRiego" parent="Base.Theme.SmartRiego" />
